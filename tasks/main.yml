@@ -1,0 +1,25 @@
+---
+- name: postgresql foundational | add repository key
+  apt_key:
+    id: ACCC4CF8
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: postgresql foundational | add postgres repository
+  apt_repository:
+    repo: "{{ pgsql_repo }}"
+    state: present
+
+- name: postgresql foundational | update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: "{{ 60*60*4 }}"
+  when: pgsql_update_apt_cache
+
+- name: postgresql foundational | install package dependencies
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items: pgsql_pkg_deps
+
+- include: postgresql.yml

@@ -1,0 +1,32 @@
+---
+pgsql_version: 9.3
+pgsql_repo: "deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main"
+
+pgsql_install_development_headers: false
+pgsql_update_apt_cache: false
+
+pgsql_locale: en_US.UTF-8
+pgsql_timezone: UTC
+
+pgsql_pkg_deps:
+  - python-software-properties
+  - python-psycopg2
+
+pgsql_pkgs:
+  - postgresql
+  - postgresql-contrib
+
+pgsql_config_port: 5432
+pgsql_config_max_connections: 100
+pgsql_config_shared_buffers: 24MB
+pgsql_config_work_mem: 1MB
+pgsql_config_checkpoint_segments: 3
+pgsql_config_checkpoint_completion_target: 0.5
+pgsql_config_effective_cache_size: 128MB
+
+pgsql_pguser: postgres
+pgsql_pggroup: postgres
+
+pgsql_create_superuser: false
+pgsql_create_users: false
+# pgsql_users_default_perms

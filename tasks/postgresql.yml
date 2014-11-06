@@ -1,0 +1,77 @@
+---
+# http://blog.wercker.com/2013/11/25/django-16-part3.html
+- name: postgresql | test for locale settings
+  command: locale
+  register: locale_output
+  changed_when: false
+
+- name: postgresql | set locale
+  sudo: yes
+  command: "/usr/sbin/update-locale LANG={{ pgsql_locale }} LC_ALL={{ pgsql_locale }} LANGUAGE={{ pgsql_locale }}"
+  when: "'LC_ALL={{ pgsql_locale }}' not in locale_output.stdout"
+
+- name: postgresql | install postgres server and client
+  apt:
+    pkg: "{{ item }}-{{ pgsql_version }}"
+    state: installed
+  with_items: pgsql_pkgs
+
+- name: postgresql | install dev headers
+  apt:
+    pkg: "{{ item }}"
+    state: installed
+  with_items:
+    - libpq-dev
+  when: pgsql_install_development_headers
+
+- name: postgresql | install host based auth
+  template:
+    src: pg_hba.conf.j2
+    dest: "/etc/postgresql/{{ pgsql_version }}/main/pg_hba.conf"
+    owner: "{{ pgsql_pguser }}"
+    group: "{{ pgsql_pggroup }}"
+  notify: restart postgresql
+
+- name: postgresql | install config file
+  template:
+    src: postgresql.conf
+    dest: "/etc/postgresql/{{ pgsql_version }}/main/postgresql.conf"
+    owner: "{{ pgsql_pguser }}"
+    group: "{{ pgsql_pggroup }}"
+  notify: restart postgresql
+
+- name: postgresql | start postgresql and configure to startup automatically
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+  register: started
+
+- name: postgresql | wait for postgresql restart
+  command: sleep 2
+  when: started.changed
+
+- name: postgresql | create the default postgresql user
+  sudo_user: postgres
+  postgresql_user:
+    name: "{{ pgsql_superuser_username}}"
+    password: "{{ pgsql_superuser_password}}"
+    login_user: "{{ pgsql_pguser }}"
+    role_attr_flags: "CREATEDB,SUPERUSER"
+  when: pgsql_create_superuser
+
+- name: postgresql | test for server instrumentation
+  sudo_user: postgres
+  command: psql -c 'select * from pg_extension;' -t -A
+  register: server_instrumentation
+  changed_when: false
+
+- name: postgresql | install server instrumentation
+  sudo_user: postgres
+  command: psql -c 'CREATE EXTENSION adminpack;' -t -A
+  when: "'adminpack' not in server_instrumentation.stdout"
+
+# TODO create users/dbs
+# when: pgsql_create_users
+
+# TODO restart postgres

@@ -1,0 +1,16 @@
+---
+pgsql_install_development_headers: true
+pgsql_update_apt_cache: true
+
+pgsql_create_superuser: true
+pgsql_superuser_username: pgsuper
+pgsql_superuser_password: password
+
+# not setup yet..
+pgsql_users:
+  - username: esuser
+    password: password
+    databases:
+      - dbtest1
+      - db2
+      - database_three
